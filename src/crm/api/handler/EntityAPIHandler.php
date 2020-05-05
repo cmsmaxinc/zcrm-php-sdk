@@ -29,11 +29,17 @@ class EntityAPIHandler extends APIHandler
         return new EntityAPIHandler($zcrmrecord);
     }
 
-    public function getRecord()
+    public function getRecord($param_map=array(),$header_map=array())
     {
         try {
             $this->requestMethod = APIConstants::REQUEST_METHOD_GET;
             $this->urlPath = $this->record->getModuleApiName() . "/" . $this->record->getEntityId();
+            foreach ($param_map as $key => $value) {
+                if($value!==null)$this->addParam($key, $value);
+            }
+            foreach ($header_map as $key => $value) {
+                if($value!==null)$this->addHeader($key, $value);
+            }
             $this->addHeader("Content-Type", "application/json");
             $responseInstance = APIRequest::getInstance($this)->getAPIResponse();
             $recordDetails = $responseInstance->getResponseJSON()['data'];
@@ -410,11 +416,11 @@ class EntityAPIHandler extends APIHandler
         foreach ($recordDetails as $key => $value) {
             if ("id" == $key) {
                 $this->record->setEntityId($value);
-            } else if ("Product_Details" == $key) {
+            } else if ("Product_Details" == $key && array_key_exists($this->record->getModuleApiName(), APIConstants::INVENTORY_MODULES)) {
                 $this->setInventoryLineItems($value);
-            } else if ("Participants" == $key) {
+            } else if ("Participants" == $key && $this->record->getModuleApiName() == "Events") {
                 $this->setParticipants($value);
-            } else if ("Pricing_Details" == $key) {
+            } else if ("Pricing_Details" == $key && $this->record->getModuleApiName() == "Price_Books") {
                 $this->setPriceDetails($value);
             } else if ("Created_By" == $key) {
                 $createdBy = ZCRMUser::getInstance($value["id"], $value["name"]);
